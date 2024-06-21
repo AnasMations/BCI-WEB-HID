@@ -1,113 +1,206 @@
-import Image from "next/image";
+"use client";
+import { useEffect, useState } from "react";
+
+const states = ["UP", "DOWN", "LEFT", "RIGHT", "SELECT"];
 
 export default function Home() {
+  const [EditMode, setEditMode] = useState(false);
+  const [state, setState] = useState("NONE");
+  const [linkUP, setLinkUP] = useState("https://www.youm7.com/");
+  const [linkDOWN, setLinkDOWN] = useState("https://www.cairo24.com/");
+  const [linkLEFT, setLinkLEFT] = useState("https://9090streaming.mobtada.com/9090FMEGYPT");
+  const [linkRIGHT, setLinkRIGHT] = useState("https://www.accuweather.com/en/eg/cairo/127164/weather-forecast/127164");
+  const [iframeSrc, setIframeSrc] = useState("");
+
+
+  const openLink = (link: string) => {
+    setIframeSrc(link);
+    // setTimeout(() => {
+    //   window.open(link, "_blank");
+    // }, 1000);
+  };
+
+  const handleStateChange = (inputState: any) => {
+    setState((prevState) => {
+      // console.log("State changed from:", prevState, "->", inputState);
+
+      if (inputState === "SELECT") {
+        if (prevState === "UP") {
+          console.log("UP");
+          openLink(linkUP);
+        }
+        if (prevState === "DOWN") {
+          console.log("DOWN");
+          openLink(linkDOWN);
+        }
+        if (prevState === "LEFT") {
+          console.log("LEFT");
+          openLink(linkLEFT);
+        }
+        if (prevState === "RIGHT") {
+          console.log("RIGHT");
+          openLink(linkRIGHT);
+        }
+        setTimeout(() => {
+          setState("NONE");
+        }, 1000);
+      }
+
+      return inputState;
+    });
+  };
+
+  const handleKeyDown = (event: any) => {
+    if (event.key === "ArrowUp") {
+      handleStateChange("UP");
+    } else if (event.key === "ArrowDown") {
+      handleStateChange("DOWN");
+    } else if (event.key === "ArrowLeft") {
+      handleStateChange("LEFT");
+    } else if (event.key === "ArrowRight") {
+      handleStateChange("RIGHT");
+    } else if (event.key === "Enter") {
+      handleStateChange("SELECT");
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Clean up the event listener when the component unmounts
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  // Websocket
+  useEffect(() => {
+
+    const ws = new WebSocket("ws://localhost:8080");
+
+    ws.onopen = () => {
+      console.log("Connected to the WS Server");
+    };
+
+    ws.onmessage = (message) => {
+      console.log("Message from server:", message.data);
+      handleStateChange(message.data);
+    };
+
+    ws.onclose = () => {
+      console.log("Disconnected from the WS Server");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+    <main className="flex w-screen h-screen items-center justify-center p-24 gap-[24px]">
+      <div className="w-full h-full flex flex-col justify-center items-center border">
+        {/* فوق */}
+        <div className="flex-col w-[128px] h-[128px] flex justify-center items-center">
+          <p className={`text-[64px] ${state === "UP" && "text-lime-500"}`}>
+            فوق
+          </p>
+          {EditMode && (
+            <input
+              type="text"
+              placeholder={linkUP}
+              onChange={(e) => setLinkUP(e.target.value)}
+              className=" text-black  opacity-100 focus:animate-pulse"
             />
-          </a>
+          )}
         </div>
-      </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+        <div
+          className={`bg-lime-500 w-[2px] h-[128px] opacity-0 ${
+            state === "UP" && "opacity-100"
+          }`}
         />
+        <div className="flex items-center">
+          {/* شمال */}
+          <div className=" flex-col w-[128px] h-[128px] flex justify-center items-center mr-[8px]">
+            <p className={`text-[64px] ${state === "LEFT" && "text-lime-500"}`}>
+              شمال
+            </p>
+            {EditMode && (
+              <input
+                type="text"
+                placeholder={linkLEFT}
+                onChange={(e) => setLinkLEFT(e.target.value)}
+                className=" text-black  opacity-100 focus:animate-pulse"
+              />
+            )}
+          </div>
+          {/* Arrow Left */}
+          <div
+            className={`bg-lime-500 w-[128px] h-[2px] opacity-0 ${
+              state === "LEFT" && "opacity-100"
+            }`}
+          />
+          {/* اختر */}
+          <div className=" w-[128px] h-[128px] flex justify-center items-center">
+            <p
+              className={`text-[32px] ${
+                state === "SELECT" &&
+                "text-lime-500 p-4 border-lime-500 border-2"
+              }`}
+            >
+              اختر
+            </p>
+          </div>
+          {/* Arrow Right */}
+          <div
+            className={`bg-lime-500 w-[128px] h-[2px] opacity-0 ${
+              state === "RIGHT" && "opacity-100"
+            }`}
+          />
+          {/* يمين */}
+          <div className=" flex-col w-[128px] h-[128px] flex justify-center items-center">
+            <p
+              className={`text-[64px] ${state === "RIGHT" && "text-lime-500"}`}
+            >
+              يمين
+            </p>
+            {EditMode && (
+              <input
+                type="text"
+                placeholder={linkRIGHT}
+                onChange={(e) => setLinkRIGHT(e.target.value)}
+                className=" text-black  opacity-100 focus:animate-pulse"
+              />
+            )}
+          </div>
+        </div>
+        {/* Arrow Down */}
+        <div
+          className={`bg-lime-500 w-[2px] h-[128px] opacity-0 ${
+            state === "DOWN" && "opacity-100"
+          }`}
+        />
+        {/* تحت */}
+        <div className=" flex-col w-[128px] h-[128px] flex justify-center items-center">
+          <p className={`text-[64px] ${state === "DOWN" && "text-lime-500"}`}>
+            تحت
+          </p>
+          {EditMode && (
+            <input
+              type="text"
+              placeholder={linkDOWN}
+              onChange={(e) => setLinkDOWN(e.target.value)}
+              className=" text-black  opacity-100 focus:animate-pulse"
+            />
+          )}
+        </div>
+        <button
+          onClick={() => setEditMode(!EditMode)}
+          className=" absolute left-8 top-8 text-white p-2 mt-4 hover:opacity-50"
+        >
+          {EditMode ? "Save" : "Edit"}
+        </button>
       </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      <iframe src={iframeSrc} className=" border w-full h-full" />
     </main>
   );
 }
